@@ -31,7 +31,7 @@ All services run on a single `t2.medium` EC2 instance to consolidate costs while
 
 ## Architecture Diagram
 
-<img width="595" alt="architecture-1" src="https://github.com/user-attachments/assets/2af63789-5262-487f-b00e-e9bc59d4ee1f" />
+<img width="595" alt="396429566-2af63789-5262-487f-b00e-e9bc59d4ee1f" src="https://github.com/user-attachments/assets/fe7a6c99-8d43-4df4-a08b-b4da5b62beaf" />
 
 *Architecutre diagram*
 
