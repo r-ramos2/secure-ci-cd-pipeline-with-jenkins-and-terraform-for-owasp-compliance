@@ -17,7 +17,7 @@
 
 ## Introduction
 
-This comprehensive guide demonstrates how to deploy a secure and scalable AWS DevSecOps project utilizing Jenkins, SonarQube, and a React application. The goal is to implement Infrastructure as Code (IaC) practices using Terraform while adhering to AWS best security practices as of November 2024. This guide will help you deploy your applications and services on AWS EC2 instances, following security protocols and configurations that make the system production-ready.
+This comprehensive guide demonstrates how to deploy a secure and scalable AWS DevSecOps project utilizing Jenkins, SonarQube, and a React application. The goal is to implement Infrastructure as Code (IaC) practices using Terraform while adhering to AWS best security practices. This guide will help you deploy your applications and services on AWS EC2 instances, following security protocols and configurations that make the system production-ready.
 
 ## Project Overview
 
