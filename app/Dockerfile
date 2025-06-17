@@ -1,23 +1,30 @@
-# Use the official Node.js 16 image as the base image
-FROM node:16
+#────────────────────────────────────────────────────────────────
+# 1. Build Stage: compile React app
+FROM node:16 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the container
 COPY package*.json ./
+RUN npm ci
 
-# Install project dependencies
-RUN npm install
-
-# Copy the rest of the application code to the container
 COPY . .
-
-# Build the React app
 RUN npm run build
 
-# Expose the port that the app will run on (usually 3000 by default)
-EXPOSE 3000
+#────────────────────────────────────────────────────────────────
+# 2. Runtime Stage: serve with Nginx
+FROM nginx:stable‑alpine
 
-# Start the React app when the container starts
-CMD [ "npm", "start" ]
+# Remove default content
+RUN rm ‑rf /usr/share/nginx/html/*
+
+# Copy built assets
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Expose HTTP
+EXPOSE 80
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget ‑qO‑ http://localhost/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
