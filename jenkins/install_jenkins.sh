@@ -1,44 +1,62 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Exit immediately if any command fails
-set -e
+#────────────────────────────────────────────────────────────────
+# 1. Update OS and Install Java 17 (Amazon Corretto)
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Updating system..."
+sudo yum update -y
 
-# Update the system
-echo "Updating system..."
-sudo dnf update -y
+echo "[INFO] Installing Amazon Corretto 17..."
+sudo yum install -y java-17-amazon-corretto
 
-# Install Java (Jenkins requires Java, Amazon Corretto is a good choice)
-echo "Installing Java (Amazon Corretto)..."
-sudo dnf install -y java-17-amazon-corretto
-java --version  # Confirm Java installation
-
-# Install Jenkins
-echo "Installing Jenkins..."
-sudo dnf install -y wget
-sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+#────────────────────────────────────────────────────────────────
+# 2. Install Jenkins
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Adding Jenkins repository..."
+sudo wget -O /etc/yum.repos.d/jenkins.repo \
+  https://pkg.jenkins.io/redhat-stable/jenkins.repo
 sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-sudo dnf upgrade -y
-sudo dnf install -y jenkins
+
+echo "[INFO] Installing Jenkins..."
+sudo yum install -y jenkins
+
+echo "[INFO] Enabling and starting Jenkins..."
 sudo systemctl enable --now jenkins
-sudo systemctl status jenkins || { echo "Jenkins failed to start"; exit 1; }
 
-# Jenkins should be running now. The default port for Jenkins is 8080.
-echo "Jenkins is now installed and running on port 8080."
+#────────────────────────────────────────────────────────────────
+# 3. Install Docker
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Installing Docker..."
+sudo amazon-linux-extras install -y docker
 
-# Install Docker
-echo "Installing Docker..."
-sudo dnf install -y docker
+echo "[INFO] Enabling and starting Docker..."
 sudo systemctl enable --now docker
-sudo systemctl start docker
 
-# Install SonarQube (Docker-based)
-echo "Installing SonarQube..."
-sudo docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
+echo "[INFO] Adding 'ec2-user' to docker group..."
+sudo usermod -aG docker ec2-user
 
-# Install Trivy (Container security scanner)
-echo "Installing Trivy..."
-sudo dnf install -y wget apt-transport-https gnupg lsb-release
-wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
-echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-sudo dnf update -y
-sudo dnf install -y trivy
+#────────────────────────────────────────────────────────────────
+# 4. Deploy SonarQube (Docker container)
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Running SonarQube container..."
+sudo docker run -d --name sonar \
+  -p 9000:9000 \
+  sonarqube:lts-community
+
+#────────────────────────────────────────────────────────────────
+# 5. Install Trivy (Static & Image Scanner)
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Installing Trivy..."
+TRIVY_VERSION=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest \
+  | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+curl -sL https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz \
+  | sudo tar xz -C /usr/local/bin --strip-components=1 trivy
+
+echo "[INFO] Verifying installations..."
+java --version
+sudo systemctl status jenkins --no-pager
+docker ps
+trivy --version
+
+echo "[INFO] Jenkins bootstrap complete. Access Jenkins at port 8080, SonarQube at 9000." 
