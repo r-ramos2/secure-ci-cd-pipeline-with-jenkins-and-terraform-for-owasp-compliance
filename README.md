@@ -1,155 +1,260 @@
-# Secure CI/CD Pipeline with Jenkins and Terraform for OWASP Compliance
+# Scalable CI/CD Pipeline for AWS DevSecOps
+
+[![Terraform](https://img.shields.io/badge/Terraform-%3E%3D1.5.0-blue)](https://www.terraform.io/) [![Jenkins](https://img.shields.io/badge/Jenkins-LTS-blue)](https://www.jenkins.io/) [![Docker](https://img.shields.io/badge/Docker-%3E%3D20.10-blue)](https://www.docker.com/) [![SonarQube](https://img.shields.io/badge/SonarQube-LTS-blue)](https://www.sonarqube.org/) [![Trivy](https://img.shields.io/badge/Trivy-%3E%3D0.46-blue)](https://github.com/aquasecurity/trivy)
+
+☁️ **AWS DevSecOps Homelab**  
+Automated CI/CD pipeline deploying a React frontend on an EC2 instance with Terraform, Jenkins, Docker, SonarQube, Trivy, and OWASP Dependency‑Check.
+
+---
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Project Overview](#project-overview)
-- [Architecure Diagram](#architecture-diagram)
-- [Security Best Practices](#security-best-practices)
-- [Prerequisites](#prerequisites)
-- [Project Setup and Execution](#project-setup-and-execution)
-- [Jenkins Setup and Configuration](#jenkins-setup-and-configuration)
-- [SonarQube Setup](#sonarqube-setup)
-- [React Application Setup](#react-application-setup)
-- [Pipeline Configuration](#pipeline-configuration)
-- [Conclusion](#conclusion)
-- [Resources](#resources)
+1. [Topology](#topology)  
+2. [Architecture Overview](#architecture-overview)  
+3. [Prerequisites](#prerequisites)  
+4. [Repository Structure](#repository-structure)  
+5. [Getting Started](#getting-started)  
+6. [Instance Configuration](#instance-configuration)  
+7. [Jenkins Configuration & Tools](#jenkins-configuration--tools)  
+8. [Pipeline Setup](#pipeline-setup)  
+9. [Application Folder (`/app`)](#application-folder-app)  
+10. [Cleanup](#cleanup)  
+11. [Best Practices](#best-practices)  
+12. [Next Steps & Enhancements](#next-steps--enhancements)  
+13. [Resources](#resources)
 
-## Introduction
+---
 
-This comprehensive guide demonstrates how to deploy a secure and scalable AWS DevSecOps project utilizing Jenkins, SonarQube, and a React application. The goal is to implement Infrastructure as Code (IaC) practices using Terraform while adhering to AWS best security practices. This guide will help you deploy your applications and services on AWS EC2 instances, following security protocols and configurations that make the system production-ready.
+## Topology
 
-## Project Overview
+[![Architecture Diagram](images/architecture-diagram.png)
+](https://github.com/r-ramos2/secure-ci-cd-pipeline-with-jenkins-and-terraform-for-owasp-compliance/blob/main/images/architecture-diagram.png)
 
-This project includes deploying:
+Single public VPC with one EC2 host running Jenkins, Docker, SonarQube, and Trivy; protected by a dedicated Security Group.
 
-- **Jenkins**: CI/CD automation server.
-- **SonarQube**: Code quality and security inspection platform.
-- **React**: A frontend application deployed for demonstration.
+---
 
-All services run on a single `t2.medium` EC2 instance to consolidate costs while maintaining sufficient resources.
+## Architecture Overview
 
-## Architecture Diagram
+- **VPC**: Provisioned by Terraform  
+- **Public Subnet**: 10.0.1.0/24  
+- **Security Group**: SSH (22), HTTP (80), HTTPS (443), Jenkins (8080), SonarQube (9000), React App (3000)  
+- **EC2 Instance**: Amazon Linux 2 (t2.medium) running:  
+  - Jenkins (systemd service)  
+  - Docker Engine & containers (SonarQube)  
+  - Trivy CLI  
 
-<img width="595" alt="396429566-2af63789-5262-487f-b00e-e9bc59d4ee1f" src="https://github.com/user-attachments/assets/fe7a6c99-8d43-4df4-a08b-b4da5b62beaf" />
-
-*Architecutre diagram*
-
-### Cost Considerations
-The `t2.medium` instance, costing approximately $0.0464 per hour in `us-east-1`, provides:
-
-- 2 vCPUs and 4GB memory for multi-service operations.
-
-This design avoids additional costs by:
-
-- Deploying in a single availability zone (single-AZ).
-- Limiting storage to a 30GB gp3 volume.
-
-## Security Best Practices
-
-### IAM and Role-Based Access Control
-- Use an IAM user with restricted access (no admin permissions).
-- Assign an EC2 role with the least privileges necessary.
-
-### Terraform Best Practices
-- Validate configurations before applying (`terraform validate`).
-- Destroy unused resources with `terraform destroy` after use.
-
-### Network Security
-- Restrict security groups to allow only specific IPs on required ports (e.g., 22, 8080, 9000, 3000).
-
-### Dependency Scanning
-- Integrate OWASP and Trivy stages in Jenkins for vulnerability management.
+---
 
 ## Prerequisites
 
-- AWS Account with CLI configured.
-- Terraform installed locally.
-- SSH Key Pair for EC2 instance access.
-- GitHub Repository with the React application source code.
+- **AWS CLI** configured (`aws configure`)  
+- **Terraform** >= 1.5.0  
+- **Docker Hub Account**  
+- **Existing EC2 Key Pair**  
+- **Jenkins Admin Access**  
 
-## Project Setup and Execution
+---
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/r-ramos2/aws-devsecops-react-app.git
-    cd aws-devsecops-react-app
-    ```
-2. Initialize and apply Terraform:
-    ```bash
-    terraform init
-    terraform validate
-    terraform plan
-    terraform apply
-    ```
-3. Note the public IP of the EC2 instance from Terraform outputs.
+## Repository Structure
 
-## Jenkins Setup and Configuration
+```text
+.
+├── app/                   # React frontend Docker context
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public/
+│   ├── src/
+│   └── tailwind.config.js
+├── images/                # Architecture diagrams
+│   └── architecture-diagram.png
+├── jenkins/               # Bootstrap scripts
+│   └── install_jenkins.sh
+├── terraform/             # Terraform configs
+│   ├── provider.tf
+│   ├── variables.tf
+│   ├── main.tf
+│   └── outputs.tf
+├── Jenkinsfile            # Declarative pipeline
+├── .gitignore
+└── README.md              # This file
+````
 
-1. Access Jenkins:
-    - Visit `http://<public_ip>:8080`.
+---
 
-2. Retrieve the Admin Password:
-    ```bash
-    sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-    ```
-    - Use this password for the initial login and update it immediately.
+## Getting Started
 
-3. Install Required Plugins:
-    - Eclipse Temurin, SonarQube Scanner, NodeJS, OWASP, Docker.
+### 1. Clone the Repo
 
-4. Add Global Tools:
-    - **JDK 17**: Install from adoptium.net (version 17.0.8.1).
-    - **SonarQube Scanner**: Install version 5.0.1.3006.
-    - **NodeJS**: Install version 16.2.0.
-    - **Dependency-Check**: Install version 6.5.1.
+```bash
+git clone https://github.com/<your-username>/aws-ci-cd-pipeline.git
+cd aws-ci-cd-pipeline/terraform
+```
 
-## SonarQube Setup
+### 2. Configure Variables & Keypair
 
-1. Access SonarQube:
-    - Visit `http://<public_ip>:9000`.
+Terraform auto-generates an SSH keypair and uploads the public key. Review or override defaults in `variables.tf` or create `terraform.tfvars`:
 
-2. Generate an Authentication Token:
-    - Navigate to Security > Tokens and create a token named "Jenkins".
+```hcl
+variable "region" {
+  default = "us-east-1"
+}
 
-3. Integrate with Jenkins:
-    - Add the token under Manage Jenkins > Credentials as `sonar-token`.
-    - Configure SonarQube server settings in Jenkins:
-        - Name: `sonar-server`
-        - URL: `http://<public_ip>:9000`
-        - Token: `sonar-token`
+variable "ami_name_filter" {
+  description = "Filter to find the latest Amazon Linux 2 AMI"
+  default     = "amzn2-ami-hvm-*-gp2"
+}
 
-## React Application Setup
+variable "instance_type" {
+  default = "t2.medium"
+}
 
-1. SSH into the Instance:
-    ```bash
-    ssh -i your_key.pem ec2-user@<public_ip>
-    ```
+variable "my_ip" {
+  description = "Your IP (CIDR) for SSH"
+  default     = "203.0.113.0/32"
+}
+```
 
-2. Run the Application:
-    ```bash
-    npm install
-    npm run build
-    npm start
-    ```
-    - Access the app at `http://<public_ip>:3000`.
+### 3. Bootstrap Terraform & Provision
 
-## Pipeline Configuration
+```bash
+terraform init
+terraform validate
+terraform plan -out=plan.tf
+terraform apply plan.tf
+```
 
-1. Create a Jenkins Pipeline:
-    - Navigate to New Item > Pipeline.
-    - Paste the Jenkinsfile contents into the pipeline script section.
-    
-2. Run the Pipeline:
-    - Check the results in Jenkins and SonarQube.
+Terraform will:
 
-## Conclusion
+* Generate RSA keypair (`tls_private_key` → `aws_key_pair` → `local_file`)
+* Lookup latest Amazon Linux 2 AMI via `data.aws_ami`
+* Create VPC, Subnet, IGW, Route Table, Security Group
+* Launch EC2 instance with user data to install Jenkins, Docker, SonarQube, and Trivy
 
-This project deploys a secure, scalable AWS DevSecOps environment for Jenkins, SonarQube, and React using Terraform. By following the security best practices outlined, you ensure that your cloud infrastructure is both effective and safe. This setup offers a robust foundation for building, testing, and deploying applications securely within AWS.
+On success, note outputs:
+
+* `private_key_path`
+* `instance_public_ip`
+* `jenkins_url`
+* `sonarqube_url`
+* `react_app_url`
+
+---
+
+## Instance Configuration
+
+SSH into the instance:
+
+```bash
+ssh -i ../terraform/${private_key_path} ec2-user@${instance_public_ip}
+```
+
+Verify services:
+
+```bash
+sudo systemctl status jenkins
+docker ps         # should show SonarQube container
+trivy --version
+```
+
+---
+
+## Jenkins Configuration & Tools
+
+1. Browse to `http://${instance_public_ip}:8080`.
+2. Install plugins (Manage Jenkins → Plugin Manager):
+
+   * Java Tool Installer
+   * NodeJS
+   * SonarQube Scanner
+   * OWASP Dependency‑Check
+   * Docker Pipeline
+3. Configure global tools (Manage Jenkins → Global Tool Configuration):
+
+   * **JDK**: `jdk17`
+   * **NodeJS**: `node16`
+   * **SonarQube Scanner**: `sonar-scanner`
+   * **Dependency‑Check**: `DP-Check` v6.5.1
+   * **Docker**: `docker`
+
+---
+
+## Pipeline Setup
+
+1. Create a Pipeline job named `amazon-frontend`.
+2. Add a Secret Text credential `sonar-server` with the SonarQube token.
+3. Configure SonarQube server (Manage Jenkins → Configure System):
+
+   * **Name**: `sonar-server`
+   * **URL**: `http://${instance_public_ip}:9000`
+   * **Server authentication token**: `sonar-server`
+4. Point the job to the `Jenkinsfile` in the repo root.
+5. Key stages in `Jenkinsfile`:
+
+   * Clean Workspace
+   * Checkout Code
+   * SonarQube Analysis + Quality Gate
+   * npm install
+   * OWASP Dependency‑Check
+   * Trivy FS scan
+   * Docker build & push
+   * Trivy image scan
+   * Run App container
+
+Trigger the build and confirm each stage succeeds.
+
+---
+
+## Application Folder (`/app`)
+
+Test locally:
+
+```bash
+docker build -t amazon-frontend ./app
+docker run -d -p 3000:3000 amazon-frontend
+```
+
+Visit `http://localhost:3000`.
+
+---
+
+## Cleanup
+
+From the `terraform/` folder:
+
+```bash
+terraform destroy -auto-approve
+```
+
+Removes all provisioned AWS resources.
+
+---
+
+## Best Practices
+
+* **Least‑Privilege IAM**: narrow policies
+* **Restricted Ingress**: SSH limited to your IP
+* **Secrets Management**: Jenkins Credentials
+* **Remote State**: S3 backend + DynamoDB locking
+* **Modular Terraform**: separate modules by function
+
+---
+
+## Next Steps & Enhancements
+
+* Migrate Jenkins & app to Amazon EKS
+* Add CloudWatch alerts & metrics
+* Integrate Argo CD (GitOps)
+* Automated Jenkins config backup
+* Deploy IDS/IPS in VPC
+
+---
 
 ## Resources
 
-- [AWS EC2 Documentation](https://docs.aws.amazon.com/ec2/)
-- [Terraform Documentation](https://www.terraform.io/docs/index.html)
-- [Jenkins Documentation](https://www.jenkins.io/doc/)
-- [SonarQube Documentation](https://docs.sonarqube.org/latest/)
+* AWS Docs: [https://aws.amazon.com/documentation/](https://aws.amazon.com/documentation/)
+* Terraform: [https://www.terraform.io/docs](https://www.terraform.io/docs)
+* Jenkins: [https://www.jenkins.io/doc/](https://www.jenkins.io/doc/)
+* SonarQube: [https://docs.sonarqube.org/](https://docs.sonarqube.org/)
+* Trivy: [https://github.com/aquasecurity/trivy](https://github.com/aquasecurity/trivy)
