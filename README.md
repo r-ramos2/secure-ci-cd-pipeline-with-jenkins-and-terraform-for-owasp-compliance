@@ -88,7 +88,7 @@ Single public VPC with one EC2 host running Jenkins, Docker, SonarQube, and Triv
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/<your-username>/aws-ci-cd-pipeline.git
+git clone git clone https://github.com/r-ramos2/secure-ci-cd-pipeline-with-jenkins-and-terraform-for-owasp-compliance.git
 cd aws-ci-cd-pipeline/terraform
 ```
 
