@@ -39,7 +39,7 @@ Single public VPC with one EC2 host running Jenkins, Docker, SonarQube, and Triv
 - **VPC**: Provisioned by Terraform  
 - **Public Subnet**: 10.0.1.0/24  
 - **Security Group**: SSH (22), HTTP (80), HTTPS (443), Jenkins (8080), SonarQube (9000), React App (3000)  
-- **EC2 Instance**: Amazon Linux 2 (t2.medium) running:  
+- **EC2 Instance**: Amazon Linux 2 (t2.large) running:  
   - Jenkins (systemd service)  
   - Docker Engine & containers (SonarQube)  
   - Trivy CLI  
