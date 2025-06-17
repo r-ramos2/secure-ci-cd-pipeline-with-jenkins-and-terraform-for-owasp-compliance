@@ -1,29 +1,36 @@
+// variables.tf
+#────────────────────────────────────────────────────────────────
+# Global Variables
+#────────────────────────────────────────────────────────────────
 variable "region" {
-  description = "AWS region"
+  description = "AWS region to deploy into"
   type        = string
-  default     = "us-east-1"  # Change to your desired region
+  default     = "us-east-1"
 }
 
-variable "ami_id" {
-  description = "AMI ID for the EC2 instance"
+#────────────────────────────────────────────────────────────────
+# AMI Lookup
+#────────────────────────────────────────────────────────────────
+variable "ami_name_filter" {
+  description = "Filter to find the latest Amazon Linux 2 AMI"
   type        = string
-  default     = "ami-xxxxxxxxxxxxxxxxxxx"  # Replace with your region-specific AMI ID
+  default     = "amzn2-ami-hvm-*-gp2"
 }
 
+#────────────────────────────────────────────────────────────────
+# EC2 Instance Settings
+#────────────────────────────────────────────────────────────────
 variable "instance_type" {
-  description = "Type of EC2 instance"
+  description = "EC2 instance type for Jenkins server"
   type        = string
-  default     = "t2.medium"  # Not free-tier eligible instance type (t2.large recommended)
+  default     = "t2.large"
 }
 
-variable "key_pair_name" {
-  description = "Name of the existing key pair"
-  type        = string
-  default     = "my-key-pair"  # Replace with your actual key pair name
-}
-
+#────────────────────────────────────────────────────────────────
+# SSH Access
+#────────────────────────────────────────────────────────────────
 variable "my_ip" {
-  description = "Your IP address for SSH access"
+  description = "Your IP CIDR block for SSH access"
   type        = string
-  default     = "0.0.0.0/0"  # Replace with your IP (e.g., "203.0.113.0/32") for better security
+  default     = "203.0.113.0/32"
 }
