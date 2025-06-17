@@ -107,7 +107,7 @@ variable "ami_name_filter" {
 }
 
 variable "instance_type" {
-  default = "t2.medium"
+  default = "t2.large"
 }
 
 variable "my_ip" {
