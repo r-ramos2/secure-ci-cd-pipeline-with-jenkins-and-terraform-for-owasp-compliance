@@ -1,48 +1,38 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
 #────────────────────────────────────────────────────────────────
-# 1. Update OS and Install Java 17 (Amazon Corretto)
+# 1. Update OS and install prerequisites
 #────────────────────────────────────────────────────────────────
-echo "[INFO] Updating system..."
+echo "[INFO] Updating system and installing prerequisites..."
 sudo yum update -y
-
-echo "[INFO] Installing Amazon Corretto 17..."
-sudo yum install -y java-17-amazon-corretto
-
-#────────────────────────────────────────────────────────────────
-# 2. Install Jenkins
-#────────────────────────────────────────────────────────────────
-echo "[INFO] Adding Jenkins repository..."
-sudo wget -O /etc/yum.repos.d/jenkins.repo \
-  https://pkg.jenkins.io/redhat-stable/jenkins.repo
-sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-
-echo "[INFO] Installing Jenkins..."
-sudo yum install -y jenkins
-
-echo "[INFO] Enabling and starting Jenkins..."
-sudo systemctl enable --now jenkins
+sudo amazon-linux-extras install java-openjdk11 -y
+sudo yum install git wget unzip -y
 
 #────────────────────────────────────────────────────────────────
-# 3. Install Docker
+# 2. Install Docker
 #────────────────────────────────────────────────────────────────
 echo "[INFO] Installing Docker..."
-sudo amazon-linux-extras install -y docker
-
-echo "[INFO] Enabling and starting Docker..."
-sudo systemctl enable --now docker
-
-echo "[INFO] Adding 'ec2-user' to docker group..."
-sudo usermod -aG docker ec2-user
+sudo amazon-linux-extras install docker -y
+sudo service docker start
+sudo usermod -a -G docker ec2-user
 
 #────────────────────────────────────────────────────────────────
-# 4. Deploy SonarQube (Docker container)
+# 3. Install Jenkins
 #────────────────────────────────────────────────────────────────
-echo "[INFO] Running SonarQube container..."
-sudo docker run -d --name sonar \
-  -p 9000:9000 \
-  sonarqube:lts-community
+echo "[INFO] Installing Jenkins..."
+wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+sudo yum install jenkins -y
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+
+#────────────────────────────────────────────────────────────────
+# 4. Run SonarQube in Docker
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Deploying SonarQube container..."
+sudo docker pull sonarqube:lts
+sudo docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
 
 #────────────────────────────────────────────────────────────────
 # 5. Install Trivy (Static & Image Scanner)
@@ -50,13 +40,28 @@ sudo docker run -d --name sonar \
 echo "[INFO] Installing Trivy..."
 TRIVY_VERSION=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest \
   | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-curl -sL https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz \
-  | sudo tar xz -C /usr/local/bin --strip-components=1 trivy
+ARCHIVE="trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz"
 
+# download & extract
+curl -sL "https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/${ARCHIVE}" \
+  -o "/tmp/${ARCHIVE}"
+tar zxvf "/tmp/${ARCHIVE}" -C /tmp trivy
+sudo mv /tmp/trivy /usr/local/bin/trivy
+sudo chmod +x /usr/local/bin/trivy
+rm "/tmp/${ARCHIVE}"
+
+#────────────────────────────────────────────────────────────────
+# 6. Verify installations
+#────────────────────────────────────────────────────────────────
 echo "[INFO] Verifying installations..."
 java --version
 sudo systemctl status jenkins --no-pager
 docker ps
+which trivy || { echo 'ERROR: trivy not found in PATH'; exit 1; }
 trivy --version
 
-echo "[INFO] Jenkins bootstrap complete. Access Jenkins at port 8080, SonarQube at 9000." 
+#────────────────────────────────────────────────────────────────
+# Done
+#────────────────────────────────────────────────────────────────
+echo "[INFO] Jenkins bootstrap complete."
+echo "[INFO] Access Jenkins at port 8080, SonarQube at port 9000."
