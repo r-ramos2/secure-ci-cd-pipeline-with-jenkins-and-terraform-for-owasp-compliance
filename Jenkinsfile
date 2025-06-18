@@ -8,8 +8,8 @@ pipeline {
 
   environment {
     SCANNER_HOME      = tool 'sonar-scanner'
-    DOCKER_CREDENTIAL = 'dockerhub-creds'     // ID of your Jenkins Docker Hub credentials
-    IMAGE_NAME        = "your_docker_username/amazon:latest"
+    DOCKER_CREDENTIAL = 'dockerhub-creds'                        // Jenkins creds ID for Docker Hub
+    IMAGE_NAME        = 'mydockerhubuser/amazon:latest'           // replace mydockerhubuser with your Docker Hub username
   }
 
   options {
@@ -20,12 +20,15 @@ pipeline {
 
   stages {
     stage('Cleanup') {
-      steps { cleanWs() }
+      steps {
+        cleanWs()
+      }
     }
 
     stage('Checkout') {
       steps {
-        checkout scm
+        git branch: 'main',                                        // or your default branch name
+            url: 'https://github.com/my-org/my-repo.git'           // replace with your GitHub org/repo
       }
     }
 
@@ -45,7 +48,7 @@ pipeline {
         stage('Dependency Check') {
           steps {
             dependencyCheck additionalArguments: '--scan . --disableYarnAudit --disableNodeAudit',
-                            odcInstallation: 'DP-Check'
+                             odcInstallation: 'DP-Check'
             dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
           }
         }
@@ -62,8 +65,10 @@ pipeline {
 
     stage('Build & Test') {
       steps {
-        sh 'npm ci'
-        sh 'npm test'
+        dir('app') {
+          sh 'npm ci'
+          sh 'npm test'
+        }
       }
     }
 
