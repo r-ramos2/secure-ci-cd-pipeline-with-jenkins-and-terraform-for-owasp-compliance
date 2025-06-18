@@ -158,7 +158,7 @@ resource "aws_instance" "jenkins" {
   associate_public_ip_address = true
 
   # User data to bootstrap Jenkins, Docker, SonarQube, Trivy
-  user_data = templatefile("${path.module}/../jenkins/install_jenkins.sh", {})
+  user_data = file("${path.module}/../jenkins/install_jenkins.sh")
 
   root_block_device {
     volume_size = 30
