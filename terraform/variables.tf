@@ -32,5 +32,5 @@ variable "instance_type" {
 variable "my_ip" {
   description = "Your IP CIDR block for SSH access"
   type        = string
-  default     = "203.0.113.0/32"
+  default     = "203.0.113.0/32" // change to your own private IP
 }
