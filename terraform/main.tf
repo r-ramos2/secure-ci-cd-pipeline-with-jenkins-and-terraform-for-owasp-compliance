@@ -25,10 +25,11 @@ resource "local_file" "private_key_pem" {
   file_permission = "0400"
 }
 
-# 2. AMI Data Source
+# 2. AMI Data Sources
 data "aws_ami" "linux2" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = [var.ami_owner]
+
   filter {
     name   = "name"
     values = [var.ami_name_filter]
