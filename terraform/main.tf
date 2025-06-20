@@ -9,13 +9,16 @@ resource "tls_private_key" "deployer" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
+
 resource "random_id" "suffix" {
   byte_length = 4
 }
+
 resource "aws_key_pair" "deployer" {
   key_name   = "${var.key_name_prefix}-${random_id.suffix.hex}"
   public_key = tls_private_key.deployer.public_key_openssh
 }
+
 resource "local_file" "private_key_pem" {
   content         = tls_private_key.deployer.private_key_pem
   filename        = "${path.module}/deployer_key.pem"
@@ -39,6 +42,7 @@ resource "aws_vpc" "lab" {
   enable_dns_hostnames = true
   tags = merge(local.common_tags, { Name = "${local.project_name}-vpc" })
 }
+
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.lab.id
   cidr_block              = var.public_subnet_cidr
@@ -46,19 +50,23 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
   tags = merge(local.common_tags, { Name = "${local.project_name}-subnet" })
 }
+
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.lab.id
   tags   = merge(local.common_tags, { Name = "${local.project_name}-igw" })
 }
+
 resource "aws_route_table" "rt" {
   vpc_id = aws_vpc.lab.id
   tags   = merge(local.common_tags, { Name = "${local.project_name}-rt" })
 }
+
 resource "aws_route" "default" {
   route_table_id         = aws_route_table.rt.id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.igw.id
 }
+
 resource "aws_route_table_association" "public_assoc" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.rt.id
@@ -153,14 +161,17 @@ output "private_key_path" {
   description = "Path to the generated SSH private key"
   value       = local_file.private_key_pem.filename
 }
+
 output "instance_public_ip" {
   description = "Public IP of Jenkins EC2"
   value       = aws_instance.jenkins.public_ip
 }
+
 output "jenkins_url" {
   description = "Jenkins access URL"
   value       = "http://${aws_instance.jenkins.public_ip}:${var.jenkins_port}"
 }
+
 output "sonarqube_url" {
   description = "SonarQube access URL"
   value       = "http://${aws_instance.jenkins.public_ip}:${var.sonarqube_port}"
