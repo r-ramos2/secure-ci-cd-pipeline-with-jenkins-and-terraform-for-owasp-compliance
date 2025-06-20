@@ -188,4 +188,3 @@ output "react_app_url" {
   description = "React app access URL"
   value       = "http://${aws_instance.jenkins.public_ip}:3000"
 }
-
