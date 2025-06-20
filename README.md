@@ -60,7 +60,7 @@ Single public VPC with one EC2 host running Jenkins, Docker, SonarQube, and Triv
 .
 ├── app/                   # React frontend
 ├── images/                # Diagrams
-├── jenkins/               # Bootstrap script
+├── scripts/               # Bootstrap script
 │   └── install_jenkins.sh # loaded via Terraform file()
 ├── terraform/             # Terraform configs
 │   ├── provider.tf
