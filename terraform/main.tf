@@ -148,7 +148,7 @@ resource "aws_instance" "jenkins" {
   associate_public_ip_address = true
 
   # Bootstrap via external script
-  user_data = file("${path.module}/../jenkins/install_jenkins.sh")
+  user_data = file("${path.module}/../scripts/install_jenkins.sh")
 
   root_block_device {
     volume_size = var.root_volume_size
