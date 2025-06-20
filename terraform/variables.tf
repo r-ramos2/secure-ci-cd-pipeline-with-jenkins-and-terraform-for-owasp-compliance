@@ -93,7 +93,7 @@ variable "instance_type" {
 
 # Volume Sizes (GB)
 variable "root_volume_size" {
-  description = "Root EBS volume size for Jenkins (GB)"
+  description = "Root EBS volume size for Jenkins"
   type        = number
   default     = 30
 }
