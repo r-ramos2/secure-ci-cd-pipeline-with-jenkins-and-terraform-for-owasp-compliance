@@ -88,7 +88,7 @@ variable "react_port" {
 variable "instance_type" {
   description = "EC2 instance type for Jenkins server"
   type        = string
-  default     = "t2.large"
+  default     = "t3.large"
 }
 
 # Volume Sizes (GB)
