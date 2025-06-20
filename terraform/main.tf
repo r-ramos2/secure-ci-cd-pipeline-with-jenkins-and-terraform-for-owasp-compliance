@@ -1,9 +1,7 @@
 // main.tf
 locals {
   project_name = "aws-devsecops-homelab"
-  common_tags  = {
-    Project = local.project_name
-  }
+  common_tags  = { Project = local.project_name }
 }
 
 # 1. SSH Keypair
@@ -36,7 +34,7 @@ data "aws_ami" "linux2" {
 
 # 3. Networking: VPC, Subnet, IGW, Routing
 resource "aws_vpc" "lab" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = merge(
@@ -46,7 +44,8 @@ resource "aws_vpc" "lab" {
 }
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.lab.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.public_subnet_cidr
+  availability_zone       = var.availability_zone
   map_public_ip_on_launch = true
   tags = merge(
     local.common_tags,
@@ -158,7 +157,7 @@ resource "aws_instance" "jenkins" {
   user_data = file("${path.module}/../jenkins/install_jenkins.sh")
 
   root_block_device {
-    volume_size = 30
+    volume_size = var.root_volume_size
   }
 
   tags = merge(
