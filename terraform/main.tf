@@ -28,7 +28,7 @@ resource "local_file" "private_key_pem" {
 # 2. AMI Data Sources
 data "aws_ami" "linux2" {
   most_recent = true
-  owners      = [var.ami_owner]
+  owners      = [var.linux2_ami_owner]
 
   filter {
     name   = "name"
