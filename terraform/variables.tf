@@ -39,7 +39,6 @@ variable "linux2_ami_owner" {
   type        = string
   default     = "amazon"
 }
-
  variable "linux2_ami_name_filter" {
    description = "Filter to find the latest Amazon Linux 2 AMI"
    type        = string
