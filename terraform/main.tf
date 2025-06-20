@@ -8,7 +8,7 @@ locals {
 resource "tls_private_key" "deployer" {
   algorithm = "RSA"
   rsa_bits  = 4096
-}
+
 
 resource "random_id" "suffix" {
   byte_length = 4
@@ -32,7 +32,7 @@ data "aws_ami" "linux2" {
 
   filter {
     name   = "name"
-    values = [var.ami_name_filter]
+    values = [var.linux2_ami_name_filter]
   }
 }
 
