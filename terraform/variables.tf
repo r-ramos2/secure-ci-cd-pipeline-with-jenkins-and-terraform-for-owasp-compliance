@@ -40,7 +40,7 @@ variable "linux2_ami_owner" {
   default     = "amazon"
 }
 
- variable "ami_name_filter" {
+ variable "linux2_ami_name_filter" {
    description = "Filter to find the latest Amazon Linux 2 AMI"
    type        = string
    default     = "amzn2-ami-hvm-*-gp2"
