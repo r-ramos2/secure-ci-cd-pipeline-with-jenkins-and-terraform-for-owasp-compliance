@@ -75,7 +75,7 @@ resource "aws_security_group" "jenkins_sg" {
     from_port   = var.ssh_port
     to_port     = var.ssh_port
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
+    cidr_blocks = [var.allowed_cidr]
   }
 
   # HTTP for React App
