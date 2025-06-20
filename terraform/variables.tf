@@ -45,16 +45,11 @@ variable "linux2_ami_owner" {
    default     = "amzn2-ami-hvm-*-gp2"
  }
 
-# EC2 Sizing
-variable "instance_type" {
-  description = "EC2 instance type for Jenkins server"
+# Security
+variable "allowed_cidr" {
+  description = "CIDR block permitted to reach instances (SSH/HTTP/etc.)"
   type        = string
-  default     = "t2.large"
-}
-variable "root_volume_size" {
-  description = "Root EBS volume size for Jenkins (GB)"
-  type        = number
-  default     = 30
+  default     = "0.0.0.0/0"
 }
 
 # Ports
@@ -89,9 +84,16 @@ variable "react_port" {
   default     = 3000
 }
 
-# Security
-variable "allowed_cidr" {
-  description = "CIDR block permitted to reach instances (SSH/HTTP/etc.)"
+# EC2 Sizing
+variable "instance_type" {
+  description = "EC2 instance type for Jenkins server"
   type        = string
-  default     = "0.0.0.0/0"
+  default     = "t2.large"
+}
+
+# Volume Sizes (GB)
+variable "root_volume_size" {
+  description = "Root EBS volume size for Jenkins (GB)"
+  type        = number
+  default     = 30
 }
