@@ -33,12 +33,18 @@ variable "my_ip" {
   default     = "203.0.113.0/32"
 }
 
-# AMI Lookup
-variable "ami_name_filter" {
-  description = "Filter to find the latest Amazon Linux 2 AMI"
-  type        = string
-  default     = "amzn2-ami-hvm-*-gp2"
-}
+ # AMI Lookup
+ variable "ami_owner" {
+   description = "Owner ID for the Amazon Linux 2 AMI"
+   type        = string
+   default     = "amazon"
+ }
+
+ variable "ami_name_filter" {
+   description = "Filter to find the latest Amazon Linux 2 AMI"
+   type        = string
+   default     = "amzn2-ami-hvm-*-gp2"
+ }
 
 # EC2 Sizing
 variable "instance_type" {
