@@ -73,7 +73,7 @@ resource "aws_route_table_association" "public_assoc" {
   route_table_id = aws_route_table.rt.id
 }
 
-# 4. Security Group for Jenkins & App
+# 4. Security Groups
 resource "aws_security_group" "jenkins_sg" {
   name        = "${local.project_name}-sg"
   description = "Allow SSH, HTTP, HTTPS, Jenkins, SonarQube, React App"
