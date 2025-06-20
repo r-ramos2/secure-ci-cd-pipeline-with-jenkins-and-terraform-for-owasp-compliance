@@ -37,7 +37,7 @@ Single public VPC with one EC2 host running Jenkins, Docker, SonarQube, and Triv
 
 - **VPC & Subnet**: provisioned by Terraform  
 - **Security Group**: SSH (22), HTTP (80), HTTPS (443), Jenkins (8080), SonarQube (9000), React (3000)  
-- **EC2 Instance**: Amazon Linux 2 (`t2.large`) running:
+- **EC2 Instance**: Amazon Linux 2 (`t3.large`) running:
   - Jenkins  
   - Docker Engine & SonarQube container  
   - Trivy CLI
@@ -89,7 +89,7 @@ Terraform auto-generates an RSA keypair with random suffix. Override defaults in
 ```hcl
 region          = "us-east-1"
 ami_name_filter = "amzn2-ami-hvm-*-gp2"
-instance_type   = "t2.large"  # t3.medium for light, c5.large for compute
+instance_type   = "t3.large"  # t3.medium for light, c5.large for compute
 my_ip           = "203.0.113.0/32"
 ```
 
