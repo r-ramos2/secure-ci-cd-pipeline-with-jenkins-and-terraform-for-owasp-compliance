@@ -13,7 +13,7 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 resource "aws_key_pair" "deployer" {
-  key_name   = "${local.project_name}-${random_id.suffix.hex}"
+  key_name   = "${var.key_name_prefix}-${random_id.suffix.hex}"
   public_key = tls_private_key.deployer.public_key_openssh
 }
 resource "local_file" "private_key_pem" {
@@ -37,34 +37,22 @@ resource "aws_vpc" "lab" {
   cidr_block           = var.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = merge(
-    local.common_tags,
-    { Name = "${local.project_name}-vpc" }
-  )
+  tags = merge(local.common_tags, { Name = "${local.project_name}-vpc" })
 }
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.lab.id
   cidr_block              = var.public_subnet_cidr
   availability_zone       = var.availability_zone
   map_public_ip_on_launch = true
-  tags = merge(
-    local.common_tags,
-    { Name = "${local.project_name}-subnet" }
-  )
+  tags = merge(local.common_tags, { Name = "${local.project_name}-subnet" })
 }
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.lab.id
-  tags   = merge(
-    local.common_tags,
-    { Name = "${local.project_name}-igw" }
-  )
+  tags   = merge(local.common_tags, { Name = "${local.project_name}-igw" })
 }
 resource "aws_route_table" "rt" {
   vpc_id = aws_vpc.lab.id
-  tags   = merge(
-    local.common_tags,
-    { Name = "${local.project_name}-rt" }
-  )
+  tags   = merge(local.common_tags, { Name = "${local.project_name}-rt" })
 }
 resource "aws_route" "default" {
   route_table_id         = aws_route_table.rt.id
@@ -84,50 +72,50 @@ resource "aws_security_group" "jenkins_sg" {
 
   # SSH access for Jenkins management
   ingress {
-    from_port   = 22
-    to_port     = 22
+    from_port   = var.ssh_port
+    to_port     = var.ssh_port
     protocol    = "tcp"
     cidr_blocks = [var.my_ip]
   }
 
   # HTTP for React App
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = var.http_port
+    to_port     = var.http_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_cidr]
   }
 
   # HTTPS for secure access
   ingress {
-    from_port   = 443
-    to_port     = 443
+    from_port   = var.https_port
+    to_port     = var.https_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_cidr]
   }
 
   # Jenkins Web UI
   ingress {
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = var.jenkins_port
+    to_port     = var.jenkins_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_cidr]
   }
 
   # SonarQube UI
   ingress {
-    from_port   = 9000
-    to_port     = 9000
+    from_port   = var.sonarqube_port
+    to_port     = var.sonarqube_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_cidr]
   }
 
   # React App port
   ingress {
-    from_port   = 3000
-    to_port     = 3000
+    from_port   = var.react_port
+    to_port     = var.react_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_cidr]
   }
 
   # Allow all outbound traffic
@@ -135,13 +123,10 @@ resource "aws_security_group" "jenkins_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_cidr]
   }
 
-  tags = merge(
-    local.common_tags,
-    { Name = "${local.project_name}-sg" }
-  )
+  tags = merge(local.common_tags, { Name = "${local.project_name}-sg" })
 }
 
 # 5. EC2 Instance (Jenkins, Docker, SonarQube, Trivy)
@@ -153,17 +138,14 @@ resource "aws_instance" "jenkins" {
   vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
   associate_public_ip_address = true
 
-  # Bootstrap Jenkins, Docker, SonarQube, Trivy via external script
+  # Bootstrap via external script
   user_data = file("${path.module}/../jenkins/install_jenkins.sh")
 
   root_block_device {
     volume_size = var.root_volume_size
   }
 
-  tags = merge(
-    local.common_tags,
-    { Name = "${local.project_name}-jenkins" }
-  )
+  tags = merge(local.common_tags, { Name = "${local.project_name}-jenkins" })
 }
 
 # 6. Outputs for user convenience
@@ -177,13 +159,13 @@ output "instance_public_ip" {
 }
 output "jenkins_url" {
   description = "Jenkins access URL"
-  value       = "http://${aws_instance.jenkins.public_ip}:8080"
+  value       = "http://${aws_instance.jenkins.public_ip}:${var.jenkins_port}"
 }
 output "sonarqube_url" {
   description = "SonarQube access URL"
-  value       = "http://${aws_instance.jenkins.public_ip}:9000"
+  value       = "http://${aws_instance.jenkins.public_ip}:${var.sonarqube_port}"
 }
 output "react_app_url" {
   description = "React app access URL"
-  value       = "http://${aws_instance.jenkins.public_ip}:3000"
+  value       = "http://${aws_instance.jenkins.public_ip}:${var.react_port}"
 }
