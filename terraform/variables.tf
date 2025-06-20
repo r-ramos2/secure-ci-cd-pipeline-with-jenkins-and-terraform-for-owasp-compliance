@@ -33,7 +33,7 @@ variable "my_ip" {
   default     = "203.0.113.0/32"
 }
 
- # AMI Lookup (Amazon Linux 2)
+ # AMI Lookup
 variable "linux2_ami_owner" {
   description = "Owner ID for the Amazon Linux 2 AMI"
   type        = string
